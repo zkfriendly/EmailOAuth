@@ -1,0 +1,10 @@
+{
+  "name": "client",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "start": "echo \"Start script not set\" && exit 1",
+    "build": "echo \"Build script not set\" && exit 1",
+    "test": "echo \"Test script not set\" && exit 1"
+  }
+}

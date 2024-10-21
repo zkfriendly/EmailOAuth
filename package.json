@@ -1,0 +1,8 @@
+{
+  "private": true,
+  "workspaces": ["apps/*", "packages/*"],
+  "scripts": {
+    "create:app": "node scripts/create-app.js",
+    "create:package": "node scripts/create-package.js"
+  }
+}
