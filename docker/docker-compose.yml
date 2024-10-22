@@ -75,5 +75,13 @@ services:
       "-c", "listen_addresses=*",
     ]
 
+  relayer:
+    build:
+      context: .
+      dockerfile: Dockerfile.relayer
+    ports:
+      - "${RELAYER_PORT}:8000"
+    command: ["cargo", "run"]
+
 volumes:
   postgres_data:

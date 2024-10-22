@@ -1,0 +1,40 @@
+# Stage 1: Build environment with Node.js for contracts
+FROM node:18 as contract-builder
+
+# Install forge
+RUN curl -L https://foundry.paradigm.xyz | bash
+RUN /root/.foundry/bin/foundryup
+
+
+# Set the working directory in the container
+WORKDIR /app
+
+# Clone the repository and checkout the specific branch
+RUN git clone https://github.com/zkemail/ether-email-auth.git . && \
+git checkout feat/generic-relayer
+
+# Build contracts
+WORKDIR /app/packages/contracts
+
+RUN yarn install
+
+# Add forge to PATH
+ENV PATH="/root/.foundry/bin:${PATH}"
+RUN yarn build
+
+# Stage 2: Build Rust application
+FROM rust:latest as rust-builder
+
+# Set the working directory in the container
+WORKDIR /app
+
+# Copy artifacts from contract-builder stage
+COPY --from=contract-builder /app /app
+
+# Copy the config file
+COPY .config.json /app/packages/relayer/config.json
+
+# Build the Rust application
+WORKDIR /app/packages/relayer
+RUN cargo build --release
+COPY .ic.pem /app/packages/relayer/.ic.pem
