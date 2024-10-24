@@ -6,18 +6,14 @@ import "@openzeppelin/contracts/utils/Create2.sol";
 import {ERC1967Proxy} from "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol";
 
 /// @title Example contract that emits an event for the command in the given email.
-contract EmitEmailCommand {
+contract EmailAuthBase {
     address public verifierAddr;
     address public dkimAddr;
     address public emailAuthImplementationAddr;
 
-    event StringCommand(address indexed emailAuthAddr, string indexed command);
-    event UintCommand(address indexed emailAuthAddr, uint indexed command);
-    event IntCommand(address indexed emailAuthAddr, int indexed command);
-    event DecimalsCommand(address indexed emailAuthAddr, uint indexed command);
-    event EthAddrCommand(
+    event SignHashCommand(
         address indexed emailAuthAddr,
-        address indexed command
+        bytes32 indexed hash
     );
 
     constructor(
@@ -111,38 +107,15 @@ contract EmitEmailCommand {
     /// @notice Returns a two-dimensional array of strings representing the command templates.
     /// @return string[][] A two-dimensional array of strings, where each inner array represents a set of fixed strings and matchers for a command template.
     function commandTemplates() public pure returns (string[][] memory) {
-        string[][] memory templates = new string[][](5); // Corrected size to 5
-        templates[0] = new string[](3); // Corrected size to 3
-        templates[0][0] = "Emit";
-        templates[0][1] = "string";
-        templates[0][2] = "{string}";
-
-        templates[1] = new string[](3); // Added missing initialization
-        templates[1][0] = "Emit";
-        templates[1][1] = "uint";
-        templates[1][2] = "{uint}";
-
-        templates[2] = new string[](3); // Added missing initialization
-        templates[2][0] = "Emit";
-        templates[2][1] = "int";
-        templates[2][2] = "{int}";
-
-        templates[3] = new string[](3); // Added missing initialization
-        templates[3][0] = "Emit";
-        templates[3][1] = "decimals";
-        templates[3][2] = "{decimals}";
-
-        templates[4] = new string[](4); // Corrected size to 4
-        templates[4][0] = "Emit";
-        templates[4][1] = "ethereum";
-        templates[4][2] = "address"; // Fixed typo: "adddress" to "address"
-        templates[4][3] = "{ethAddr}";
-
+        string[][] memory templates = new string[][](1);
+        templates[0] = new string[](2);
+        templates[0][0] = "SignHash";
+        templates[0][1] = "{uint}";
         return templates;
     }
 
     /// @notice Emits an event for the command in the given email.
-    function emitEmailCommand(
+    function entryPoint(
         EmailAuthMsg memory emailAuthMsg,
         address owner,
         uint templateIdx
@@ -186,29 +159,10 @@ contract EmitEmailCommand {
             );
         }
         emailAuth.authEmail(emailAuthMsg);
-        _emitEvent(emailAuthAddr, emailAuthMsg.commandParams, templateIdx);
-    }
 
-    function _emitEvent(
-        address emailAuthAddr,
-        bytes[] memory commandParams,
-        uint templateIdx
-    ) private {
-        if (templateIdx == 0) {
-            string memory command = abi.decode(commandParams[0], (string));
-            emit StringCommand(emailAuthAddr, command);
-        } else if (templateIdx == 1) {
-            uint command = abi.decode(commandParams[0], (uint));
-            emit UintCommand(emailAuthAddr, command);
-        } else if (templateIdx == 2) {
-            int command = abi.decode(commandParams[0], (int));
-            emit IntCommand(emailAuthAddr, command);
-        } else if (templateIdx == 3) {
-            uint command = abi.decode(commandParams[0], (uint));
-            emit DecimalsCommand(emailAuthAddr, command);
-        } else if (templateIdx == 4) {
-            address command = abi.decode(commandParams[0], (address));
-            emit EthAddrCommand(emailAuthAddr, command);
+        if (templateIdx == 0) { // only one command. And that is SignHash
+            bytes32 hash = abi.decode(emailAuthMsg.commandParams[0], (bytes32));
+            emit SignHashCommand(emailAuthAddr, hash);
         } else {
             revert("invalid templateIdx");
         }
