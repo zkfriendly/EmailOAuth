@@ -112,7 +112,11 @@ contract EmailAccountBase {
         return templates;
     }
 
-    /// @notice Emits an event for the command in the given email.
+    /// @notice Processes an email authentication message and executes the corresponding command.
+    /// @dev This function deploys a new EmailAuth proxy if it doesn't exist, initializes it, and authenticates the email.
+    /// @dev It then executes the command specified by the templateIdx. Currently, only the SignHash command (templateIdx 0) is supported.
+    /// @param emailAuthMsg The email authentication message containing proof and command details.
+    /// @param templateIdx The index of the command template to be executed.
     function entryPoint(
         EmailAuthMsg memory emailAuthMsg,
         uint templateIdx
@@ -155,7 +159,7 @@ contract EmailAccountBase {
         }
         emailAuth.authEmail(emailAuthMsg);
 
-        if (templateIdx == 0) { // only one command. And that is SignHash
+        if (templateIdx == 0) { // SignHash command
             uint256 hash = abi.decode(emailAuthMsg.commandParams[0], (uint256));
             isSigned[hash] = true;
             emit SignHashCommand(emailAuthAddr, hash);
