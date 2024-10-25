@@ -11,9 +11,11 @@ contract EmailAuthBase {
     address public dkimAddr;
     address public emailAuthImplementationAddr;
 
+    mapping(uint256 => bool) public isSigned;
+
     event SignHashCommand(
         address indexed emailAuthAddr,
-        bytes32 indexed hash
+        uint256 indexed hash
     );
 
     constructor(
@@ -161,7 +163,8 @@ contract EmailAuthBase {
         emailAuth.authEmail(emailAuthMsg);
 
         if (templateIdx == 0) { // only one command. And that is SignHash
-            bytes32 hash = abi.decode(emailAuthMsg.commandParams[0], (bytes32));
+            uint256 hash = abi.decode(emailAuthMsg.commandParams[0], (uint256));
+            isSigned[hash] = true;
             emit SignHashCommand(emailAuthAddr, hash);
         } else {
             revert("invalid templateIdx");
