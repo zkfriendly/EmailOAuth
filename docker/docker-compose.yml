@@ -1,4 +1,3 @@
-version: '3.8'
 services:
   node:
     build:
@@ -14,15 +13,11 @@ services:
       "--gas-limit", "12000000",
       "--chain-id", "1337"
     ]
-    networks:
-      - relayer_network
-
+  
   scanner:
     image: otterscan/otterscan:latest
     ports:
       - "${SCANNER_PORT}:80"
-    networks:
-      - relayer_network
 
   smtp_server_1:
     build:
@@ -45,15 +40,13 @@ services:
       timeout: 30s
       retries: 5
       start_period: 30s
-    networks:
-      - relayer_network
 
   imap:
     build:
       context: .
       dockerfile: Dockerfile.imap
     environment:
-      - RELAYER_ENDPOINT=http://relayer:8000/api/receiveEmail
+      - RELAYER_ENDPOINT=http://host.docker.internal:8000/api/receiveEmail
       - IMAP_LOGIN_ID=${IMAP_LOGIN_ID}
       - IMAP_LOGIN_PASSWORD=${IMAP_LOGIN_PASSWORD}
       - IMAP_DOMAIN_NAME=${IMAP_DOMAIN_NAME}
@@ -61,9 +54,7 @@ services:
       - AUTH_TYPE=${IMAP_AUTH_TYPE}
       - JSON_LOGGER=${IMAP_JSON_LOGGER}
     command: ["relayer-imap"]
-    networks:
-      - relayer_network
-  
+
   postgres:
     image: postgres:15
     environment:
@@ -83,36 +74,29 @@ services:
       "postgres",
       "-c", "listen_addresses=*",
     ]
-    networks:
-      - relayer_network
 
-  relayer:
-    build:
-      context: .
-      dockerfile: Dockerfile.relayer
-    ports:
-      - "8000:8000"
-    command: ["/bin/bash", "-c", "apt-get update && apt-get install -y iputils-ping zsh git && sh -c \"$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)\" && cargo run"]
-    depends_on:
-      smtp_server_1:
-        condition: service_healthy
-      postgres:
-        condition: service_healthy
-    environment:
-      - DATABASE_URL=postgres://${POSTGRES_USER:-postgres}@postgres:5432/${POSTGRES_DB:-relayer}
-    healthcheck:
-      test: ["CMD-SHELL", "curl -f http://localhost:8000/api/healthz || exit 1"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-    networks:
-      - relayer_network
+
+  # relayer:
+  #   build:
+  #     context: .
+  #     dockerfile: Dockerfile.relayer
+  #   ports:
+  #     - "8000:8000"
+  #   command: ["/bin/bash", "-c", "apt-get update && apt-get install -y iputils-ping zsh git && sh -c \"$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)\" && cargo run"]
+  #   depends_on:
+  #     smtp_server_1:
+  #       condition: service_healthy
+  #     postgres:
+  #       condition: service_healthy
+  #   environment:
+  #     - DATABASE_URL=postgres://${POSTGRES_USER:-postgres}@postgres:5432/${POSTGRES_DB:-relayer}
+  #   healthcheck:
+  #     test: ["CMD-SHELL", "curl -f http://localhost:8000/api/healthz || exit 1"]
+  #     interval: 30s
+  #     timeout: 10s
+  #     retries: 3
+  #   networks:
+  #     - relayer_network
 
 volumes:
   postgres_data:
-
-networks:
-  relayer_network:
-    driver: bridge
-    driver_opts:
-      com.docker.network.bridge.host_binding_ipv4: "0.0.0.0"
