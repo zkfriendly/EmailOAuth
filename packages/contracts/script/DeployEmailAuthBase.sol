@@ -19,7 +19,7 @@ contract Deploy is Script {
     Verifier verifierImpl;
     Verifier verifier;
     EmailAuth emailAuthImpl;
-    EmailAuthBase emailAuth;
+    EmailAccountBase emailAuth;
 
     function run() external {
         uint256 deployerPrivateKey = vm.envUint("PRIVATE_KEY");
@@ -87,7 +87,7 @@ contract Deploy is Script {
 
         // Deploy EmailAuthBase
         {
-            emailAuth = new EmailAuthBase(
+            emailAuth = new EmailAccountBase(
                 address(verifier),
                 address(dkim),
                 address(emailAuthImpl)

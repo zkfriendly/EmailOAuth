@@ -5,8 +5,8 @@ import "@zk-email/ether-email-auth-contracts/src/EmailAuth.sol";
 import "@openzeppelin/contracts/utils/Create2.sol";
 import {ERC1967Proxy} from "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol";
 
-/// @title Example contract that emits an event for the command in the given email.
-contract EmailAuthBase {
+/// @title EmailAccountBase: Base contract for signing arbitrary hashes using an email account.
+contract EmailAccountBase {
     address public verifierAddr;
     address public dkimAddr;
     address public emailAuthImplementationAddr;
@@ -53,11 +53,9 @@ contract EmailAuthBase {
     /// @dev This function utilizes the `Create2` library to compute the address. The computation uses a provided account address to be recovered, account salt,
     /// and the hash of the encoded ERC1967Proxy creation code concatenated with the encoded email auth contract implementation
     /// address and the initialization call data. This ensures that the computed address is deterministic and unique per account salt.
-    /// @param owner The address of the owner of the EmailAuth proxy.
     /// @param accountSalt A bytes32 salt value defined as a hash of the guardian's email address and an account code. This is assumed to be unique to a pair of the guardian's email address and the wallet address to be recovered.
     /// @return address The computed address.
     function computeEmailAuthAddress(
-        address owner,
         bytes32 accountSalt
     ) public view returns (address) {
         return
@@ -70,7 +68,7 @@ contract EmailAuthBase {
                             emailAuthImplementation(),
                             abi.encodeCall(
                                 EmailAuth.initialize,
-                                (owner, accountSalt, address(this))
+                                (address(this), accountSalt, address(this))
                             )
                         )
                     )
@@ -80,18 +78,16 @@ contract EmailAuthBase {
 
     /// @notice Deploys a new proxy contract for email authentication.
     /// @dev This function uses the CREATE2 opcode to deploy a new ERC1967Proxy contract with a deterministic address.
-    /// @param owner The address of the owner of the EmailAuth proxy.
     /// @param accountSalt A bytes32 salt value used to ensure the uniqueness of the deployed proxy address.
     /// @return address The address of the newly deployed proxy contract.
     function deployEmailAuthProxy(
-        address owner,
         bytes32 accountSalt
     ) internal returns (address) {
         ERC1967Proxy proxy = new ERC1967Proxy{salt: accountSalt}(
             emailAuthImplementation(),
             abi.encodeCall(
                 EmailAuth.initialize,
-                (owner, accountSalt, address(this))
+                (address(this), accountSalt, address(this))
             )
         );
         return address(proxy);
@@ -119,11 +115,9 @@ contract EmailAuthBase {
     /// @notice Emits an event for the command in the given email.
     function entryPoint(
         EmailAuthMsg memory emailAuthMsg,
-        address owner,
         uint templateIdx
     ) public {
         address emailAuthAddr = computeEmailAuthAddress(
-            owner,
             emailAuthMsg.proof.accountSalt
         );
         uint templateId = computeTemplateId(templateIdx);
@@ -136,7 +130,6 @@ contract EmailAuthBase {
                 "isCodeExist must be true for the first email"
             );
             address proxyAddress = deployEmailAuthProxy(
-                owner,
                 emailAuthMsg.proof.accountSalt
             );
             require(
