@@ -5,8 +5,8 @@ import "@zk-email/ether-email-auth-contracts/src/EmailAuth.sol";
 import "@openzeppelin/contracts/utils/Create2.sol";
 import {ERC1967Proxy} from "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol";
 
-/// @title EmailAccountBase: Base contract for signing arbitrary hashes using an email account.
-contract EmailAccountBase {
+/// @title EmailSigner: Contract for signing arbitrary hashes using an email account.
+contract EmailSigner {
     address public verifierAddr;
     address public dkimAddr;
     address public emailAuthImplementationAddr;
@@ -117,7 +117,7 @@ contract EmailAccountBase {
     /// @dev It then executes the command specified by the templateIdx. Currently, only the SignHash command (templateIdx 0) is supported.
     /// @param emailAuthMsg The email authentication message containing proof and command details.
     /// @param templateIdx The index of the command template to be executed.
-    function entryPoint(
+    function signHash(
         EmailAuthMsg memory emailAuthMsg,
         uint templateIdx
     ) public {

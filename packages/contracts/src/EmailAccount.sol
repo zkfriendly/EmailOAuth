@@ -10,7 +10,6 @@ import "./interfaces/IGroth16Verifier.sol";
 /// @dev Implements BaseAccount for account abstraction
 contract EmailAccount is BaseAccount {
     address private _entryPoint;
-    uint256 public ownerEmailCommitment; // Hash of the owner's salted email
     address public verifier; // The ZK verifier for email integrity and ownership
 
     bool public isInitialized;
@@ -18,19 +17,15 @@ contract EmailAccount is BaseAccount {
     /// @notice Constructs the EmailAccount contract
     /// @param anEntryPoint The EntryPoint contract address
     /// @param _verifier The Groth16 verifier contract
-    /// @param _accountCommitment The initial account commitment
     function initialize(
         address anEntryPoint,
-        address _verifier,
-        uint256 _accountCommitment
+        address _verifier
     ) public {
         if(isInitialized) revert();
         isInitialized = true;
 
         _entryPoint = anEntryPoint;
         verifier = _verifier;
-        ownerEmailCommitment = _accountCommitment % p;
-        
     }
 
     /// @notice Returns the EntryPoint contract
