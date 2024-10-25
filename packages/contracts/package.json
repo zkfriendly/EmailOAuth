@@ -14,6 +14,7 @@
     "@openzeppelin/contracts-upgradeable": "^5.0.0",
     "@zk-email/contracts": "^6.1.5",
     "@zk-email/ether-email-auth-contracts": "0.0.2-preview",
+    "@account-abstraction": "https://github.com/eth-infinitism/account-abstraction",
     "solady": "^0.0.123"
   },
   "devDependencies": {
