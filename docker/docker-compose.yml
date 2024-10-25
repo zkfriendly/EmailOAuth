@@ -1,17 +1,17 @@
 services:
   node:
-    build:
-      context: .
-      dockerfile: Dockerfile.node
+    image: ethereum/client-go:v1.13.5
     ports:
       - "${NODE_PORT}:8545"
     command: [
-      "anvil",
-      "--host", "0.0.0.0",
-      "--port", "8545",
-      "--block-time", "12",
-      "--gas-limit", "12000000",
-      "--chain-id", "1337"
+      "--miner.gaslimit", "12000000",
+      "--http", "--http.api", "personal,eth,net,web3,debug",
+      "--http.vhosts", "*,localhost,host.docker.internal", "--http.addr", "0.0.0.0",
+      "--allow-insecure-unlock", "--rpc.allow-unprotected-txs",
+      "--dev",
+      "--verbosity", "2",
+      "--nodiscover", "--maxpeers", "0", "--mine",
+      "--networkid", "1337"
     ]
   
   scanner:
@@ -75,6 +75,22 @@ services:
       "-c", "listen_addresses=*",
     ]
 
+  bundler:
+    build:
+      context: .
+      dockerfile: Dockerfile.bundler
+    ports:
+      - "${BUNDLER_PORT}:${BUNDLER_PORT}"
+    command:
+      ["yarn", "run", "bundler", "--network", "http://node:${NODE_PORT}"]
+    depends_on:
+      - node
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:${BUNDLER_PORT}/"]
+      interval: 1m30s
+      timeout: 30s
+      retries: 5
+      start_period: 30s
 
   # relayer:
   #   build:
