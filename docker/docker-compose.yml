@@ -13,11 +13,16 @@ services:
       "--nodiscover", "--maxpeers", "0", "--mine",
       "--networkid", "1337"
     ]
-  
+
   scanner:
     image: otterscan/otterscan:latest
     ports:
       - "${SCANNER_PORT}:80"
+    environment:
+      - OTTERSCAN_ETHEREUM_RPC_URL=http://node:8545
+      - OTTERSCAN_ETHEREUM_WS_URL=ws://node:8546
+    depends_on:
+      - node
 
   smtp_server_1:
     build:
@@ -116,3 +121,4 @@ services:
 
 volumes:
   postgres_data:
+  erigon_data:
