@@ -19,7 +19,7 @@ contract Deploy is Script {
     Verifier verifierImpl;
     Verifier verifier;
     EmailAuth emailAuthImpl;
-    EmailSigner emailSigner;
+    EmailWalletFactory emailWalletFactory;
 
     function run() external {
         uint256 deployerPrivateKey = vm.envUint("PRIVATE_KEY");
@@ -87,12 +87,12 @@ contract Deploy is Script {
 
         // Deploy EmailAuthBase
         {
-            emailSigner = new EmailSigner(
+            emailWalletFactory = new EmailWalletFactory(
                 address(verifier),
                 address(dkim),
                 address(emailAuthImpl)
             );
-            console.log("EmailSigner deployed at: %s", address(emailSigner));
+            console.log("EmailWalletFactory deployed at: %s", address(emailWalletFactory));
         }
         vm.stopBroadcast();
     }
