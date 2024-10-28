@@ -101,4 +101,61 @@ contract EmailAuthBase {
     function computeTemplateId(uint templateIdx) public pure returns (uint) {
         return uint256(keccak256(abi.encode(versionId(), templateIdx)));
     }
+
+    /// @notice Returns a two-dimensional array of strings representing the command templates.
+    /// @return string[][] A two-dimensional array of strings, where each inner array represents a set of fixed strings and matchers for a command template.
+    function commandTemplates() public pure virtual returns (string[][] memory) {
+        string[][] memory templates = new string[][](0);
+        return templates;
+    }
+
+    /// @notice Gets or creates an EmailAuth instance for the given email auth message
+    /// @param emailAuthMsg The email authentication message containing proof details
+    /// @param templateIdx The index of the command template
+    /// @return EmailAuth The EmailAuth instance
+    function getOrCreateEmailAuth(
+        EmailAuthMsg memory emailAuthMsg,
+        uint templateIdx
+    ) internal returns (EmailAuth) {
+        address owner = address(this);
+        address emailAuthAddr = computeEmailAuthAddress(
+            owner,
+            emailAuthMsg.proof.accountSalt
+        );
+        uint templateId = computeTemplateId(templateIdx);
+        require(templateId == emailAuthMsg.templateId, "invalid template id");
+
+        EmailAuth emailAuth;
+        if (emailAuthAddr.code.length == 0) {
+            require(
+                emailAuthMsg.proof.isCodeExist == true,
+                "isCodeExist must be true for the first email"
+            );
+            address proxyAddress = deployEmailAuthProxy(
+                owner,
+                emailAuthMsg.proof.accountSalt
+            );
+            require(
+                proxyAddress == emailAuthAddr,
+                "proxy address does not match with emailAuthAddr"
+            );
+            emailAuth = EmailAuth(proxyAddress);
+            emailAuth.initDKIMRegistry(dkim());
+            emailAuth.initVerifier(verifier());
+            string[][] memory templates = commandTemplates();
+            for (uint idx = 0; idx < templates.length; idx++) {
+                emailAuth.insertCommandTemplate(
+                    computeTemplateId(idx),
+                    templates[idx]
+                );
+            }
+        } else {
+            emailAuth = EmailAuth((emailAuthAddr));
+            require(
+                emailAuth.controller() == address(this),
+                "invalid controller"
+            );
+        }
+        return emailAuth;
+    }
 }

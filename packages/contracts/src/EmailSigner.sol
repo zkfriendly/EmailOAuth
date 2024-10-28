@@ -3,12 +3,12 @@ pragma solidity ^0.8.12;
 
 import "./EmailAuthBase.sol";
 
-/// @title EmailWalletFactory: Contract for creating email wallets.
-contract EmailWalletFactory is EmailAuthBase {
+/// @title EmailSigner: Contract for signing emails.
+contract EmailSigner is EmailAuthBase {
 
-    event EmailWalletCreated(
+    event HashSigned(
         address indexed emailAuthAddr,
-        address indexed emailAccountAddr
+        bytes32 indexed hash
     );
 
     constructor(
@@ -17,18 +17,17 @@ contract EmailWalletFactory is EmailAuthBase {
         address _emailAuthImplementationAddr
     ) EmailAuthBase(_verifierAddr, _dkimAddr, _emailAuthImplementationAddr) {}
 
-    /// @notice Returns the version ID of the EmailWalletFactory contract.
-    /// @return string A string representing the version ID.
     function versionId() public pure override returns (string memory) {
-        return "EMAIL_WALLET_FACTORY_2.0";
+        return "EMAIL_SIGNER";
     }
 
     /// @notice Returns a two-dimensional array of strings representing the command templates.
     /// @return string[][] A two-dimensional array of strings, where each inner array represents a set of fixed strings and matchers for a command template.
     function commandTemplates() public pure override returns (string[][] memory) {
         string[][] memory templates = new string[][](1);
-        templates[0] = new string[](1);
-        templates[0][0] = "CreateEmailAccount";
+        templates[0] = new string[](2);
+        templates[0][0] = "SignHash";
+        templates[0][1] = "{uint}";
         return templates;
     }
 
@@ -44,8 +43,9 @@ contract EmailWalletFactory is EmailAuthBase {
         EmailAuth emailAuth = getOrCreateEmailAuth(emailAuthMsg, templateIdx);
         emailAuth.authEmail(emailAuthMsg);
 
-        if (templateIdx == 0) { // create email account
-            emit EmailWalletCreated(address(emailAuth), address(this));
+        if (templateIdx == 0) { // sign hash
+            uint hash = abi.decode(emailAuthMsg.commandParams[0], (uint));
+            emit HashSigned(address(emailAuth), bytes32(hash));
         } else {
             revert("invalid templateIdx");
         }
