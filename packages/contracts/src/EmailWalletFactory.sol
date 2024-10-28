@@ -20,6 +20,10 @@ contract EmailWalletFactory is EmailAuthBase {
         address _emailAuthImplementationAddr
     ) EmailAuthBase(_verifierAddr, _dkimAddr, _emailAuthImplementationAddr) {}
 
+    function versionId() public pure override returns (string memory) {
+        return "EMAIL_WALLET_2.0";
+    }
+
     /// @notice Returns a two-dimensional array of strings representing the command templates.
     /// @return string[][] A two-dimensional array of strings, where each inner array represents a set of fixed strings and matchers for a command template.
     function commandTemplates() public pure returns (string[][] memory) {
@@ -77,6 +81,7 @@ contract EmailWalletFactory is EmailAuthBase {
                 "invalid controller"
             );
         }
+        
         emailAuth.authEmail(emailAuthMsg);
 
         if (templateIdx == 0) { // create email account

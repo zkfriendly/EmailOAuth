@@ -11,8 +11,6 @@ contract EmailAuthBase {
     address public dkimAddr;
     address public emailAuthImplementationAddr;
 
-    string public constant VERSION = "EMAIL_AUTH";
-
     constructor(
         address _verifierAddr,
         address _dkimAddr,
@@ -91,12 +89,16 @@ contract EmailAuthBase {
         return address(proxy);
     }
 
+    function versionId() public pure virtual returns (string memory) {
+        return "EXAMPLE";
+    }
+
     /// @notice Calculates a unique command template ID for template provided by this contract.
     /// @dev Encodes the email account recovery version ID, "EXAMPLE", and the template index,
     /// then uses keccak256 to hash these values into a uint ID.
     /// @param templateIdx The index of the command template.
     /// @return uint The computed uint ID.
     function computeTemplateId(uint templateIdx) public pure returns (uint) {
-        return uint256(keccak256(abi.encode(VERSION, templateIdx)));
+        return uint256(keccak256(abi.encode(versionId(), templateIdx)));
     }
 }
